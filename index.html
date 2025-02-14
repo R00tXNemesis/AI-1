@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Your Gadget</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: black; overflow: hidden; cursor: crosshair; }
+        canvas { display: block; position: absolute; top: 0; left: 0; }
+        h1 {
+            position: absolute;
+            width: 100%;
+            top: 20px;
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <h1>Tekan & Tahan untuk Kembang Api 🎆</h1>
+    <canvas id="canvas"></canvas>
+    <audio id="fireworkSound" src="https://www.fesliyanstudios.com/play-mp3/4385" muted></audio>
+    
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const fireworkSound = document.getElementById("fireworkSound");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let fireworks = [];
+        let isPressing = false;
+
+        class Firework {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.particles = [];
+
+                for (let i = 0; i < 100; i++) {
+                    this.particles.push(new Particle(this.x, this.y));
+                }
+            }
+
+            update() {
+                this.particles = this.particles.filter(p => p.alpha > 0);
+                this.particles.forEach(p => p.update());
+            }
+
+            draw() {
+                this.particles.forEach(p => p.draw());
+            }
+        }
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = (Math.random() - 0.5) * 10;
+                this.speedY = (Math.random() - 0.5) * 10;
+                this.color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+                this.alpha = 1;
+                this.gravity = 0.05;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.speedY += this.gravity;
+                this.alpha -= 0.02;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            fireworks.forEach(fw => {
+                fw.update();
+                fw.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        function startFirework(e) {
+            isPressing = true;
+            fireworkSound.muted = false; // Pastikan suara tidak dibisukan
+            fireworkSound.loop = true;
+            fireworkSound.play();
+            createFirework(e);
+        }
+
+        function stopFirework() {
+            isPressing = false;
+            fireworkSound.pause();
+        }
+
+        function createFirework(e) {
+            if (isPressing) {
+                fireworks.push(new Firework(e.clientX, e.clientY));
+                setTimeout(() => createFirework(e), 200);
+            }
+        }
+
+        // Untuk PC (Mouse)
+        canvas.addEventListener("mousedown", startFirework);
+        canvas.addEventListener("mouseup", stopFirework);
+        canvas.addEventListener("mouseleave", stopFirework);
+
+        // Untuk HP (Layar Sentuh)
+        canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            startFirework(e.touches[0]);
+        });
+        canvas.addEventListener("touchend", stopFirework);
+        canvas.addEventListener("touchcancel", stopFirework);
+
+        animate();
+    </script>
+</body>
+</html>
